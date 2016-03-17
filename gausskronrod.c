@@ -47,9 +47,9 @@ static double gausskronrod[15][3] =
  * @param [out] I calculated value of integral
  * @param [out] err estimated error
  */
-void gausskronrod_integrate(double (*f)(double, void *), double a, double b, void *args, double *I, double *err)
+double gausskronrod_integrate(double (*f)(double, void *), double a, double b, void *args, double *err)
 {
-    double dx = (b-a)/2;
+    const double dx = (b-a)/2;
     double integral_G7  = 0;
     double integral_K15 = 0;
 
@@ -59,15 +59,17 @@ void gausskronrod_integrate(double (*f)(double, void *), double a, double b, voi
         const double wiG = gausskronrod[i][1];
         const double wiK = gausskronrod[i][2];
 
-        const double zi  = (xi+1)*(b-a)/2+a;
+        const double zi  = (xi+1)*dx+a;
         const double fzi = f(zi, args);
 
         integral_G7  += wiG*fzi;
         integral_K15 += wiK*fzi;
     }
 
-    *I = dx*integral_K15;
-    *err = fabs(dx)*pow(200*fabs(integral_G7-integral_K15),1.5);
+    if(err != NULL)
+        *err = fabs(dx)*pow(200*fabs(integral_G7-integral_K15),1.5);
+
+    return dx*integral_K15;
 }
 
 
@@ -90,21 +92,19 @@ void gausskronrod_integrate(double (*f)(double, void *), double a, double b, voi
  */
 int gausskronrod_integrate_adaptive(double (*f)(double, void *), double a, double b, int minintervals, int limit, double tol, void *args, double *I, double *err)
 {
-    int len = 0;
-
     if(limit < minintervals)
         limit = minintervals;
 
     interval_t intervals[limit];
 
-    for(int i = 0; i < minintervals; i++)
+    int len;
+    for(len = 0; len < minintervals; len++)
     {
         interval_t *interval = &intervals[len];
-        interval->left  = a+ i   *(b-a)/minintervals;
-        interval->right = a+(i+1)*(b-a)/minintervals;
+        interval->left  = a+ len   *(b-a)/minintervals;
+        interval->right = a+(len+1)*(b-a)/minintervals;
 
-        gausskronrod_integrate(f, interval->left, interval->right, args, &interval->I, &interval->err);
-        len++;
+        interval->I = gausskronrod_integrate(f, interval->left, interval->right, args, &interval->err);
     }
     
     while(true)
@@ -157,10 +157,9 @@ int gausskronrod_integrate_adaptive(double (*f)(double, void *), double a, doubl
         /* calculate integrals and errors, replace one item in the list and
          * append the other item to the end of the list
          */
-        double I_left, err_left, I_right, err_right;
-
-        gausskronrod_integrate(f, left, mid,   args, &I_left,  &err_left);
-        gausskronrod_integrate(f, mid,  right, args, &I_right, &err_right);
+        double err_left, err_right;
+        double I_left  = gausskronrod_integrate(f, left, mid,   args, &err_left);
+        double I_right = gausskronrod_integrate(f, mid,  right, args, &err_right);
         
         intervals[maximum].left  = left;
         intervals[maximum].right = mid;
@@ -172,6 +171,7 @@ int gausskronrod_integrate_adaptive(double (*f)(double, void *), double a, doubl
         intervals[len].I     = I_right;
         intervals[len].err   = err_right;
 
+        /* increase len of array intervals */
         len++;
     }
 }
@@ -179,7 +179,7 @@ int gausskronrod_integrate_adaptive(double (*f)(double, void *), double a, doubl
 
 double f(double x, void *ptr)
 {
-    return exp(-x*x);
+    return sin(x)*log(x);
 }
 
 int main(int argc, char *argv[])
@@ -187,11 +187,11 @@ int main(int argc, char *argv[])
     double I,err;
     double I2,err2;
 
-    gausskronrod_integrate(f, 0, 10, NULL, &I, &err);
-    gausskronrod_integrate_adaptive(f, 0, 10, 1, 100, 1e-12, NULL, &I2, &err2);
+    I = gausskronrod_integrate(f, 1, 100, NULL, &err);
+    int i = gausskronrod_integrate_adaptive(f, 1, 100, 1, 100, 1e-12, NULL, &I2, &err2);
 
-    printf("%.15g, %.15g\n", I, err);
-    printf("%.15g, %.15g\n", I2, err2);
+    printf("%.18g, %g\n", I, err);
+    printf("%.18g, %g (%d)\n", I2, err2, i);
 
     return 0;
 }

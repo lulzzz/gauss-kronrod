@@ -85,7 +85,7 @@ def integrate(f, a, b, minintervals=1, limit=200, tol=1e-10, args=()):
             err2 += err_i**2
 
         err = sqrt(err2)
-        if err < tol: # XXX relative tolerance
+        if abs(err/Itotal) < tol:
             return Itotal,err
 
         # no convergence
@@ -108,8 +108,8 @@ def integrate(f, a, b, minintervals=1, limit=200, tol=1e-10, args=()):
 
 
 if __name__ == "__main__":
-    f = lambda x,alpha: alpha*x**2
-    args = (1,)
-    print("%.15g, %15g" % integrate(f, 1,4, args=args))
-    print("%.15g, %15g" % integrate_gausskronrod(f, 1,4, args=args))
-    print("%.15g, %15g" % quad(f, 1, 4, args=args))
+    f = lambda x: 1e10
+
+    print("%.15g, %15g" % quad(f, 1, 4))
+    print("%.15g, %15g" % integrate_gausskronrod(f, 1,4))
+    print("%.15g, %15g" % integrate(f, 1,4))

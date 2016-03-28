@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from math import *
+from  math import cos, sin, sqrt
 from scipy.integrate import quad
 
 # nodes and weights vor Gauss-Kronrod
@@ -108,8 +108,13 @@ def integrate(f, a, b, minintervals=1, limit=200, tol=1e-10, args=()):
 
 
 if __name__ == "__main__":
-    f = lambda x: 1e10
+    p = 100
+    f = lambda x: x*sin(p*x)
+    g = lambda x: -x/p*cos(p*x)+1/p**2*sin(p*x)
+    a, b = 1, 4
 
-    print("%.15g, %15g" % quad(f, 1, 4))
-    print("%.15g, %15g" % integrate_gausskronrod(f, 1,4))
-    print("%.15g, %15g" % integrate(f, 1,4))
+    expected = g(b)-g(a)
+    for result, esterror in (quad(f, a, b),
+                            integrate_gausskronrod(f, a, b),
+                            integrate(f, a, b)):
+        print("{:15.13f} {:15g} {:15g}".format(result, esterror, 1-result/expected))

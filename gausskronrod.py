@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import bisect
-from  math import cos, sin, sqrt
+from math import cos, sin, sqrt
 import numpy as np
 from scipy.integrate import quad
 
@@ -27,7 +27,7 @@ gausskronrod = (
 )
 
 
-def integrate_gausskronrod(f, a,b, args=()):
+def integrate_gausskronrod(f, a, b, args=()):
     """
     This function computes $\int_a^b \mathrm{d}x f(x)$ using Gauss-Kronrod
     quadrature formula. The integral is transformed
@@ -39,22 +39,22 @@ def integrate_gausskronrod(f, a,b, args=()):
 
     returns integral and an error estimate
     """
-    integral_G7  = 0
+    integral_G7 = 0
     integral_K15 = 0
 
     assert b > a
     dx = (b-a)/2
 
-    for xi,wiG,wiK in gausskronrod:
+    for xi, wiG, wiK in gausskronrod:
         zi = (xi+1)/2*(b-a)+a
         fzi = f(zi, *args)
 
-        integral_G7  += wiG*fzi
+        integral_G7 += wiG*fzi
         integral_K15 += wiK*fzi
 
     error = (200*abs(integral_G7-integral_K15))**1.5
 
-    return integral_K15*dx,dx*error
+    return integral_K15*dx, dx*error
 
 
 def integrate(f, a, b, minintervals=1, limit=200, tol=1e-10, args=()):
@@ -101,6 +101,6 @@ if __name__ == "__main__":
 
     expected = g(b)-g(a)
     for result, esterror in (quad(f, a, b),
-                            integrate_gausskronrod(f, a, b),
-                            integrate(f, a, b)):
+                             integrate_gausskronrod(f, a, b),
+                             integrate(f, a, b)):
         print("{:15.13f} {:15g} {:15g}".format(result, esterror, 1-result/expected))

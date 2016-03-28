@@ -46,7 +46,7 @@ def integrate_gausskronrod(f, a, b, args=()):
     dx = (b-a)/2
 
     for xi, wiG, wiK in gausskronrod:
-        zi = (xi+1)/2*(b-a)+a
+        zi = (xi+1)*dx+a
         fzi = f(zi, *args)
 
         integral_G7 += wiG*fzi

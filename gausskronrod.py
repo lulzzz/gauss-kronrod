@@ -57,7 +57,7 @@ def integrate_gausskronrod(f, a, b, args=()):
     return integral_K15*dx, dx*error
 
 
-def integrate(f, a, b, minintervals=1, limit=200, tol=1e-10, args=()):
+def integrate(f, a, b, args=(), minintervals=1, limit=200, tol=1e-10):
     """
     Do adaptive integration using Gauss-Kronrod.
     """

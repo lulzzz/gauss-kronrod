@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import bisect
 from  math import cos, sin, sqrt
 import numpy as np
 from scipy.integrate import quad
@@ -65,45 +66,31 @@ def integrate(f, a, b, minintervals=1, limit=200, tol=1e-10, args=()):
     limits = np.linspace(a, b, minintervals+1)
     for left, right in zip(limits[:-1], limits[1:]):
         I, err = integrate_gausskronrod(f, left, right, args)
-        intervals.append((left, right, I, err))
+        bisect.insort(intervals, (err, left, right, I))
 
     while True:
-        err2 = 0
-        Itotal = 0
-        err_max = 0
-        maximum = 0
-
-        # search for largest error and its index
-        for i in range(len(intervals)):
-            I_i,err_i = intervals[i][2:]
-            Itotal += I_i
-            if err_i > err_max:
-                err_max = err_i
-                maximum = i
-
-            err2 += err_i**2
-
+        Itotal = sum([x[3] for x in intervals])
+        err2 = sum([x[0]**2 for x in intervals])
         err = sqrt(err2)
+
         if abs(err/Itotal) < tol:
-            return Itotal,err
+            return Itotal, err
 
         # no convergence
         if len(intervals) >= limit:
-            return False
+            return False  # better to raise an exception
 
-        # accuracy is still not good enough, so we split up the partial
-        # integral with the larges error: [left,right] => [left,mid], [mid,right]
-        left,right = intervals[maximum][0], intervals[maximum][1]
+        err, left, right, I = intervals.pop()
 
         # split integral
         mid = left+(right-left)/2
 
         # calculate integrals and errors, replace one item in the list and
         # append the other item to the end of the list
-        I_left, err_left  = integrate_gausskronrod(f,left,mid,args)
-        I_right,err_right = integrate_gausskronrod(f,mid,right,args)
-        intervals[maximum] = (left,mid,I_left,err_left)
-        intervals.append((mid,right,I_right,err_right))
+        I, err = integrate_gausskronrod(f, left, mid, args)
+        bisect.insort(intervals, (err, left, mid, I))
+        I, err = integrate_gausskronrod(f, mid, right, args)
+        bisect.insort(intervals, (err, mid, right, I))
 
 
 if __name__ == "__main__":

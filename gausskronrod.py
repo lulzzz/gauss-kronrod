@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from  math import cos, sin, sqrt
+import numpy as np
 from scipy.integrate import quad
 
 # nodes and weights vor Gauss-Kronrod
@@ -61,12 +62,10 @@ def integrate(f, a, b, minintervals=1, limit=200, tol=1e-10, args=()):
     """
     intervals = []
 
-    for i in range(minintervals):
-        left  = a+(b-a)*i/minintervals
-        right = a+(b-a)*(i+1)/minintervals
-        I,err = integrate_gausskronrod(f,left,right,args)
-        intervals.append((left,right,I,err))
-    
+    limits = np.linspace(a, b, minintervals+1)
+    for left, right in zip(limits[:-1], limits[1:]):
+        I, err = integrate_gausskronrod(f, left, right, args)
+        intervals.append((left, right, I, err))
 
     while True:
         err2 = 0
